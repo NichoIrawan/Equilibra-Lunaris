@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 
-from config import settings
+from api.src.config import settings
 from services.database.users import DatabaseUser, get_or_create_user
 from services.database.database import SafeId
 from starlette.concurrency import run_in_threadpool

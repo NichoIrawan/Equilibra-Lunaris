@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from google import genai
 from google.genai import types
 
-from config import settings
+from api.src.config import settings
 from routers.auth import get_current_user
 from services.database.database import _get_conn, _put_conn
 from services.database.id_generator import _generator

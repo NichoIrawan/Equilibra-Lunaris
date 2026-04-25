@@ -3,7 +3,7 @@ import httpx
 
 # Pastikan import settings kamu sesuai dengan lokasi filenya
 # misal: from app.config import settings
-from config import settings 
+from api.src.config import settings 
 
 from services.telegram_service import send_telegram_message
 
