@@ -8,8 +8,8 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 
 from api.src.config import settings
-from services.database.users import DatabaseUser, get_or_create_user
-from services.database.database import SafeId
+from api.src.services.database.users import DatabaseUser, get_or_create_user
+from api.src.services.database.database import SafeId
 from starlette.concurrency import run_in_threadpool
 
 router = APIRouter(prefix="/auth", tags=["Auth"])

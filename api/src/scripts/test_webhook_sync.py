@@ -7,12 +7,12 @@ from unittest.mock import MagicMock, patch
 # Add src to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from services.webhook_handlers import sync_github_tasks
+from api.src.services.webhook_handlers import sync_github_tasks
 
 class TestWebhookSync(unittest.IsolatedAsyncioTestCase):
-    @patch("services.webhook_handlers.get_github_client")
-    @patch("services.webhook_handlers._get_conn")
-    @patch("services.webhook_handlers._put_conn")
+    @patch("api.src.services.webhook_handlers.get_github_client")
+    @patch("api.src.services.webhook_handlers._get_conn")
+    @patch("api.src.services.webhook_handlers._put_conn")
     async def test_sync_github_tasks(self, mock_put_conn, mock_get_conn, mock_get_github_client):
         # Mock payload
         payload = {

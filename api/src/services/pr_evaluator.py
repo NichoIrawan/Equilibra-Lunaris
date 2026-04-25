@@ -8,7 +8,7 @@ from google import genai
 from google.genai import types
 from pydantic import BaseModel, Field
 
-from config import settings
+from api.src.config import settings
 
 logger = logging.getLogger("uvicorn.error")
 

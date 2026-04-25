@@ -5,10 +5,10 @@ from fastapi import HTTPException
 import psycopg2
 import psycopg2.extras
 
-from services.database.database import _get_conn, _put_conn
-from services.database.database import router as db_router
-from services.database.id_generator import _generator
-from services.telegram_service import send_telegram_message
+from api.src.services.database.database import _get_conn, _put_conn
+from api.src.services.database.database import router as db_router
+from api.src.services.database.id_generator import _generator
+from api.src.services.telegram_service import send_telegram_message
 
 
 class DatabaseAlert(BaseModel):

@@ -6,7 +6,7 @@ import psycopg2.extras
 # Add src to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from services.database.database import _get_conn, _put_conn
+from api.src.services.database.database import _get_conn, _put_conn
 
 def check_task_status():
     conn = _get_conn()

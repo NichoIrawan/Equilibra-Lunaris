@@ -4,7 +4,7 @@ from celery.schedules import crontab
 from supabase import create_client, Client
 import httpx
 
-from config import settings
+from api.src.config import settings
 
 # Initialize Celery & Supabase
 app = Celery("stagnation_jobs", broker=getattr(settings, "redis_url", "redis://localhost:6379/0"))

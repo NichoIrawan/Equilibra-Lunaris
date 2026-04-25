@@ -1,12 +1,12 @@
 import logging
-from services.database.tasks import DatabaseTask, db_update_task
-from services.database.activities import DatabaseActivity, db_create_activity
+from api.src.services.database.tasks import DatabaseTask, db_update_task
+from api.src.services.database.activities import DatabaseActivity, db_create_activity
 from fastapi import BackgroundTasks
-from services.database.database import _get_conn, _put_conn
+from api.src.services.database.database import _get_conn, _put_conn
 import psycopg2.extras
 import re
-from github_app import get_github_client
-from services.database.id_generator import _generator
+from api.src.github_app import get_github_client
+from api.src.services.database.id_generator import _generator
 
 logger = logging.getLogger("uvicorn.error")
 
