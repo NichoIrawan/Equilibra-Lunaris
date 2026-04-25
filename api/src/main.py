@@ -1,10 +1,12 @@
 import sys
 import asyncio
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 from routers import auth, github, meetings, tasks, telegram
 
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# sys.path.insert(0, str(Path(__file__).parent))
 
 import uvicorn
 from fastapi import FastAPI
