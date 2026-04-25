@@ -154,7 +154,7 @@ async def sync_github_tasks(payload: dict):
 
 async def on_pr_opened(payload: dict, pool=None):
     # 1. AI Evaluation
-    from services.pr_evaluator import process_pr_evaluation
+    from api.src.services.pr_evaluator import process_pr_evaluation
     pr = payload.get("pull_request", {})
     repo = payload.get("repository", {})
     installation_id = payload.get("installation", {}).get("id")
@@ -169,7 +169,7 @@ async def on_pr_opened(payload: dict, pool=None):
 
 async def on_pr_reopened(payload: dict, pool=None):
     # Similar to opened
-    from services.pr_evaluator import process_pr_evaluation
+    from api.src.services.pr_evaluator import process_pr_evaluation
     pr = payload.get("pull_request", {})
     repo = payload.get("repository", {})
     installation_id = payload.get("installation", {}).get("id")
@@ -180,7 +180,7 @@ async def on_pr_reopened(payload: dict, pool=None):
     await handle_pr_opened(payload)
 
 async def on_pr_synchronize(payload: dict, pool=None):
-    from services.pr_evaluator import process_pr_evaluation
+    from api.src.services.pr_evaluator import process_pr_evaluation
     pr = payload.get("pull_request", {})
     repo = payload.get("repository", {})
     installation_id = payload.get("installation", {}).get("id")

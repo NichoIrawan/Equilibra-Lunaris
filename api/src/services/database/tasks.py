@@ -180,7 +180,7 @@ def db_update_task(task_id: int, task_data: TaskUpdate, background_tasks: Backgr
         if update_data.get("bucket_id") is None: 
             pass # No bucket change, no sync needed
         else:
-            from services.github_sync import sync_task_to_github_branch
+            from api.src.services.github_sync import sync_task_to_github_branch
             background_tasks.add_task(sync_task_to_github_branch, task_id, update_data["bucket_id"])
             
         if row is None:
@@ -255,7 +255,7 @@ def db_reorder_tasks(project_id: int, bucket_id: int, task_ids: list[int], backg
 
         conn.commit()
         
-        from services.github_sync import sync_task_to_github_branch
+        from api.src.services.github_sync import sync_task_to_github_branch
         for t_id in task_ids:
             background_tasks.add_task(sync_task_to_github_branch, t_id, bucket_id)
             

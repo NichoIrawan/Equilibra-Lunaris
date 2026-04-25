@@ -75,7 +75,7 @@ def sync_task_to_github_branch(task_id: int, new_bucket_id: int):
             gh = Github(auth=Auth.Token(gh_access_token))
         else:
             logger.warning(f"No gh_access_token for assignee. Falling back to Github App bot integration.")
-            from config import settings
+            from api.src.config import settings
             try:
                 gh = get_github_client(settings.gh_app_installation_id)
             except Exception as e:

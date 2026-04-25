@@ -317,7 +317,7 @@ def db_get_project_dashboard_data(project_id: int):
             }
         ]
 
-        from services.database.users import DatabaseUser
+        from api.src.services.database.users import DatabaseUser
         return {
             "members": members, # members already handled with floats above, but could map to a PM model if needed
             "metrics": metrics,
