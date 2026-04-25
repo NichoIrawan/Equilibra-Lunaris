@@ -6,8 +6,8 @@ import psycopg2
 import psycopg2.extras
 import json
 
-from services.database.database import _get_conn, _put_conn, SafeId
-from services.database.database import router as db_router
+from api.src.services.database.database import _get_conn, _put_conn, SafeId
+from api.src.services.database.database import router as db_router
 
 class DatabaseMeeting(BaseModel):
     id: Optional[SafeId] = None

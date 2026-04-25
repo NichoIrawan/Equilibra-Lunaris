@@ -2,10 +2,10 @@ import json
 import httpx
 import logging
 from fastapi import APIRouter, Request, HTTPException, Header, BackgroundTasks, Depends
-from routers.auth import get_current_user
-from github_app import get_github_client, get_github_integration, verify_webhook_signature
-from services.pr_evaluator import process_pr_evaluation
-from services.webhook_handlers import handle_pr_closed, handle_pr_opened
+from api.src.routers.auth import get_current_user
+from api.src.github_app import get_github_client, get_github_integration, verify_webhook_signature
+from api.src.services.pr_evaluator import process_pr_evaluation
+from api.src.services.webhook_handlers import handle_pr_closed, handle_pr_opened
 
 router = APIRouter(tags=["GitHub App"])
 logger = logging.getLogger("uvicorn.error")

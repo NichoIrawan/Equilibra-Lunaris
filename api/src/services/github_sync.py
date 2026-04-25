@@ -1,9 +1,9 @@
 import logging
 import re
 from github import Github, Auth
-from services.database.database import _get_conn, _put_conn
+from api.src.services.database.database import _get_conn, _put_conn
 import psycopg2.extras
-from github_app import get_github_client
+from api.src.github_app import get_github_client
 
 logger = logging.getLogger("uvicorn.error")
 

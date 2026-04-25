@@ -2,16 +2,16 @@ from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
 from fastapi import HTTPException, Depends
-from routers.auth import get_current_user
-from services.database.users import get_or_create_user
+from api.src.routers.auth import get_current_user
+from api.src.services.database.users import get_or_create_user
 import psycopg2
 import psycopg2.extras
 import logging
 
-from services.database.database import _get_conn
-from services.database.database import _put_conn
-from services.database.database import router as db_router, SafeId
-from services.database.id_generator import _generator
+from api.src.services.database.database import _get_conn
+from api.src.services.database.database import _put_conn
+from api.src.services.database.database import router as db_router, SafeId
+from api.src.services.database.id_generator import _generator
 
 logger = logging.getLogger(__name__)
 

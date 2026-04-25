@@ -5,7 +5,7 @@ import httpx
 # misal: from app.config import settings
 from api.src.config import settings 
 
-from services.telegram_service import send_telegram_message
+from api.src.services.telegram_service import send_telegram_message
 
 router = APIRouter(prefix="/telegram", tags=["Telegram Notification"])
 

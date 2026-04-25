@@ -1,7 +1,7 @@
 import hashlib
 import hmac
 from github import Auth, Github, GithubIntegration
-from config import settings
+from api.src.config import settings
 
 
 def get_github_integration() -> GithubIntegration:

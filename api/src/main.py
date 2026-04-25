@@ -11,15 +11,15 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from services.database.database import router as db_router, create_pool, close_pool
-from services.database import users as _db_users
-from services.database import projects as _db_projects
-from services.database import buckets as _db_buckets
-from services.database import tasks as _db_tasks
-from services.database import project_member as _db_project_member
-from services.database import alerts as _db_alerts
-from services.database import activities as _db_activities
-from services.database import meetings as _db_meetings
+from api.src.services.database.database import router as db_router, create_pool, close_pool
+from api.src.services.database import users as _db_users
+from api.src.services.database import projects as _db_projects
+from api.src.services.database import buckets as _db_buckets
+from api.src.services.database import tasks as _db_tasks
+from api.src.services.database import project_member as _db_project_member
+from api.src.services.database import alerts as _db_alerts
+from api.src.services.database import activities as _db_activities
+from api.src.services.database import meetings as _db_meetings
 
 if sys.platform == 'win32':
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())

@@ -13,11 +13,11 @@ from google import genai
 from google.genai import types
 
 from api.src.config import settings
-from routers.auth import get_current_user
-from services.database.database import _get_conn, _put_conn
-from services.database.id_generator import _generator
+from api.src.routers.auth import get_current_user
+from api.src.services.database.database import _get_conn, _put_conn
+from api.src.services.database.id_generator import _generator
 
-from services.database.alerts import DatabaseAlert, db_create_alert
+from api.src.services.database.alerts import DatabaseAlert, db_create_alert
 
 router = APIRouter(tags=["Meetings"])
 
@@ -64,7 +64,7 @@ class ConfirmTasksRequest(BaseModel):
     alert_id: int
     tasks: List[ExtractedTaskPayload]
 
-from services.database.meetings import DatabaseMeeting, db_create_meeting, db_get_meetings_by_project
+from api.src.services.database.meetings import DatabaseMeeting, db_create_meeting, db_get_meetings_by_project
 
 # ==========================================
 # FUNGSI DATABASE SUPABASE (DEPRECATED -> PostgreSQL)

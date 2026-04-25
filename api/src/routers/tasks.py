@@ -5,9 +5,9 @@ import psycopg2.extras
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
 
-from services.database.database import _get_conn, _put_conn, SafeId
-from services.database.tasks import db_create_task, db_update_task
-from services.database.id_generator import _generator
+from api.src.services.database.database import _get_conn, _put_conn, SafeId
+from api.src.services.database.tasks import db_create_task, db_update_task
+from api.src.services.database.id_generator import _generator
 
 router = APIRouter(prefix="/api/v1/tasks", tags=["Tasks"])
 

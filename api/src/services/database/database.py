@@ -3,7 +3,7 @@ import socket
 import tempfile
 import psycopg2
 import psycopg2.pool
-from config import settings
+from api.src.config import settings
 from typing import Optional, Annotated, Any
 from pydantic import BeforeValidator, PlainSerializer
 from pathlib import Path
