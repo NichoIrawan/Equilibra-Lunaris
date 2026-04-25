@@ -64,8 +64,9 @@ export const MeetingIntelligenceTab: React.FC<MeetingIntelligenceTabProps> = ({
     let interval: ReturnType<typeof setInterval>;
     if (view === "processing") {
       interval = setInterval(async () => {
+        const apiBase = import.meta.env.VITE_BACKEND_URL ?? "http://localhost:8000/api";
         const response = await fetch(
-          `http://localhost:8000/meetings/poll-analysis`,
+          `${apiBase}/meetings/poll-analysis`,
           { credentials: "include" }
         );
         if (response.ok) {
@@ -131,7 +132,8 @@ export const MeetingIntelligenceTab: React.FC<MeetingIntelligenceTabProps> = ({
 
     try {
       // Hitting backend directly to avoid Vite proxy multipart form drop bugs
-      const response = await fetch("http://localhost:8000/analyze-meeting", {
+      const apiBase = import.meta.env.VITE_BACKEND_URL ?? "http://localhost:8000/api";
+      const response = await fetch(`${apiBase}/analyze-meeting`, {
         method: "POST",
         body: formData,
         credentials: "include",
@@ -182,8 +184,9 @@ export const MeetingIntelligenceTab: React.FC<MeetingIntelligenceTabProps> = ({
     setError(null);
 
     try {
+      const apiBase = import.meta.env.VITE_BACKEND_URL ?? "http://localhost:8000/api";
       const response = await fetch(
-        `http://localhost:8000/invite-bot?meeting_url=${encodeURIComponent(
+        `${apiBase}/invite-bot?meeting_url=${encodeURIComponent(
           meetingUrl
         )}&project_id=${projectId}`,
         {
@@ -457,11 +460,10 @@ export const MeetingIntelligenceTab: React.FC<MeetingIntelligenceTabProps> = ({
               <button
                 onClick={syncToProject}
                 disabled={syncing || synced || result.tasks.length === 0}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-[13px] transition-all shadow-lg ${
-                  synced
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-[13px] transition-all shadow-lg ${synced
                     ? "bg-green-500 text-white"
                     : "bg-[#3B82F6] text-white hover:bg-[#2563EB] hover:scale-105 active:scale-95 disabled:opacity-50"
-                }`}
+                  }`}
               >
                 {syncing ? (
                   <>
@@ -555,28 +557,25 @@ export const MeetingIntelligenceTab: React.FC<MeetingIntelligenceTabProps> = ({
                     result.tasks.map((task) => (
                       <div
                         key={task.id}
-                        className={`group relative p-4 rounded-xl border border-[#374151] transition-all hover:bg-[#1F2937] ${
-                          task.completed ? "opacity-50" : "bg-[#0B0E14]/40"
-                        }`}
+                        className={`group relative p-4 rounded-xl border border-[#374151] transition-all hover:bg-[#1F2937] ${task.completed ? "opacity-50" : "bg-[#0B0E14]/40"
+                          }`}
                       >
                         <div className="flex items-start gap-3">
                           <button
                             onClick={() => toggleTask(task.id)}
-                            className={`mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
-                              task.completed
+                            className={`mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${task.completed
                                 ? "bg-green-500 border-green-500 text-white"
                                 : "border-[#374151] hover:border-[#3B82F6]"
-                            }`}
+                              }`}
                           >
                             {task.completed && <CheckCircle2 size={12} />}
                           </button>
                           <div className="flex-1 min-w-0">
                             <p
-                              className={`text-[13px] font-semibold text-white leading-snug ${
-                                task.completed
+                              className={`text-[13px] font-semibold text-white leading-snug ${task.completed
                                   ? "line-through text-slate-500"
                                   : ""
-                              }`}
+                                }`}
                             >
                               {task.title}
                             </p>
@@ -588,13 +587,12 @@ export const MeetingIntelligenceTab: React.FC<MeetingIntelligenceTabProps> = ({
                                 <Calendar size={10} /> {task.due_date}
                               </span>
                               <span
-                                className={`px-1.5 py-0.5 rounded border ${
-                                  task.priority === "high"
+                                className={`px-1.5 py-0.5 rounded border ${task.priority === "high"
                                     ? "bg-red-500/10 text-red-400 border-red-500/20"
                                     : task.priority === "medium"
-                                    ? "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
-                                    : "bg-green-500/10 text-green-500 border-green-500/20"
-                                }`}
+                                      ? "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
+                                      : "bg-green-500/10 text-green-500 border-green-500/20"
+                                  }`}
                               >
                                 {task.priority}
                               </span>
