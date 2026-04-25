@@ -3,7 +3,7 @@ import asyncio
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
-from routers import auth, github, meetings, tasks, telegram
+from api.src.routers import auth, github, meetings, tasks, telegram
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 # sys.path.insert(0, str(Path(__file__).parent))
