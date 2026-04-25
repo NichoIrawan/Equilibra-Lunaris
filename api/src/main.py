@@ -45,12 +45,12 @@ app.add_middleware(
 def read_root():
     return {"Message": "FastAPI is running!"}
 
-app.include_router(auth.router)
-app.include_router(github.router)
-app.include_router(db_router)
-app.include_router(meetings.router)
-app.include_router(tasks.router)
-app.include_router(telegram.router)
+app.include_router(auth.router, prefix="/api")
+app.include_router(github.router, prefix="/api")
+app.include_router(db_router, prefix="/api")
+app.include_router(meetings.router, prefix="/api")
+app.include_router(tasks.router, prefix="/api")
+app.include_router(telegram.router, prefix="/api")
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True, log_level="debug")

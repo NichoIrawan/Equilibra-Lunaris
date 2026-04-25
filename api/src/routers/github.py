@@ -73,7 +73,7 @@ async def github_webhook(
     """
     event = x_github_event or "unknown"
     
-    from services.webhook_handlers import process_github_event
+    from api.src.services.webhook_handlers import process_github_event
     background_tasks.add_task(process_github_event, payload, event)
     
     return {"status": "accepted"}

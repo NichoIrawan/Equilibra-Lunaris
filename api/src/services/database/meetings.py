@@ -39,7 +39,7 @@ def db_create_meeting(meeting: DatabaseMeeting):
             data["action_items"] = json.dumps(data["action_items"])
             
         if "id" not in data or data["id"] is None:
-             from services.database.id_generator import _generator
+             from api.src.services.database.id_generator import _generator
              data["id"] = _generator.generate()
 
         columns = list(data.keys())
