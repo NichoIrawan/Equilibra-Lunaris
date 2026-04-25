@@ -12,7 +12,7 @@ from api.src.services.database.users import DatabaseUser, get_or_create_user
 from api.src.services.database.database import SafeId
 from starlette.concurrency import run_in_threadpool
 
-router = APIRouter(prefix="/auth", tags=["Auth"])
+router = APIRouter(tags=["Auth"])
 
 _pending_oauth_states: set[str] = set()
 
@@ -84,7 +84,7 @@ async def get_current_user_optional(
         return None
 
 
-@router.get("/login")
+@router.get("/auth/login")
 def auth_login():
     """
     Redirect the browser to GitHub's OAuth authorization page.
@@ -99,7 +99,7 @@ def auth_login():
     })
     return RedirectResponse(f"https://github.com/login/oauth/authorize?{qs}")
 
-@router.get("/callback")
+@router.get("/auth/callback")
 async def auth_callback(code: str, state: str):
     """
     Handle the GitHub OAuth callback.
@@ -176,7 +176,7 @@ async def auth_callback(code: str, state: str):
     )
     return response
 
-@router.get("/me", response_model=AuthMeResponse)
+@router.get("/auth/me", response_model=AuthMeResponse)
 async def auth_me(current_user: dict = Depends(get_current_user)):
     """
     Return the profile of the currently authenticated GitHub user.
@@ -202,7 +202,7 @@ async def auth_me(current_user: dict = Depends(get_current_user)):
         "db_user": db_user,
     }
 
-@router.post("/sync-user", response_model=DatabaseUser | None)
+@router.post("/auth/sync-user", response_model=DatabaseUser | None)
 async def sync_logged_in_user(current_user: dict = Depends(get_current_user)):
     """
     Create or fetch a database user for the currently authenticated GitHub user.
@@ -216,7 +216,7 @@ async def sync_logged_in_user(current_user: dict = Depends(get_current_user)):
         current_user.get("name"),
     )
 
-@router.post("/logout")
+@router.post("/auth/logout")
 async def auth_logout():
     """
     Clear the auth cookie, effectively signing the user out.

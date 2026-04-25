@@ -7,7 +7,7 @@ from api.src.config import settings
 
 from api.src.services.telegram_service import send_telegram_message
 
-router = APIRouter(prefix="/telegram", tags=["Telegram Notification"])
+router = APIRouter(tags=["Telegram Notification"])
 
 TELEGRAM_API_URL = f"https://api.telegram.org/bot{settings.telegram_bot_token}"
         
@@ -15,7 +15,7 @@ TELEGRAM_API_URL = f"https://api.telegram.org/bot{settings.telegram_bot_token}"
 # ==========================================
 # PENDEKATAN 1: WEBHOOK (Bagus untuk Production)
 # ==========================================
-@router.post("/webhook")
+@router.post("/telegram/webhook")
 async def telegram_webhook(request: Request):
     """
     Route ini akan dipanggil otomatis oleh Telegram jika webhook sudah di-set.
@@ -47,7 +47,7 @@ async def telegram_webhook(request: Request):
 # ==========================================
 # PENDEKATAN 2: GET UPDATES (Bagus untuk Localhost)
 # ==========================================
-@router.get("/get-chat-id")
+@router.get("/telegram/get-chat-id")
 async def get_telegram_chat_id():
     """
     Cara pakai: 
