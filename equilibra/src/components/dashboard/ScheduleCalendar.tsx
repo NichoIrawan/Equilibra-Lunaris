@@ -18,6 +18,7 @@ interface CalendarTask {
 
 interface ScheduleCalendarProps {
   projectId?: string | number;
+  projectIds?: (string | number)[]; // NEW: Accept multiple projects for Global Timeline
   onTaskClick?: (task: CalendarTask) => void;
 }
 
@@ -34,6 +35,7 @@ const getTypeColor = (type: string): string => {
 
 export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
   projectId,
+  projectIds,
   onTaskClick,
 }) => {
   const navigate = useNavigate();
@@ -73,16 +75,11 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
 
-    // First day of the month
     const firstDay = new Date(year, month, 1);
-    // Last day of the month
     const lastDay = new Date(year, month + 1, 0);
-
-    // Get the starting day of the week (0-6)
     const startingDayOfWeek = firstDay.getDay();
 
-    // Calculate previous month days to fill the grid
-    const prevMonthDays = startingDayOfWeek;
+    const prevMonthDays = startingDayOfWeek === 0 ? 6 : startingDayOfWeek - 1; // Adjust for Monday start
     const prevMonthLastDay = new Date(year, month, 0).getDate();
     const prevMonthStartDay = prevMonthLastDay - prevMonthDays + 1;
 
@@ -90,38 +87,28 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
 
     // Add previous month days
     for (let i = prevMonthStartDay; i <= prevMonthLastDay; i++) {
-      calendarDays.push({
-        day: i,
-        isCurrent: false,
-        date: new Date(year, month - 1, i),
-      });
+      calendarDays.push({ day: i, isCurrent: false, date: new Date(year, month - 1, i) });
     }
 
     // Add current month days
     for (let i = 1; i <= lastDay.getDate(); i++) {
-      calendarDays.push({
-        day: i,
-        isCurrent: true,
-        date: new Date(year, month, i),
-      });
+      calendarDays.push({ day: i, isCurrent: true, date: new Date(year, month, i) });
     }
 
     // Add next month days to fill the grid
     let nextMonthDay = 1;
     while (calendarDays.length % 7 !== 0) {
-      calendarDays.push({
-        day: nextMonthDay++,
-        isCurrent: false,
-        date: new Date(year, month + 1, nextMonthDay - 1),
-      });
+      calendarDays.push({ day: nextMonthDay++, isCurrent: false, date: new Date(year, month + 1, nextMonthDay - 1) });
     }
 
     return calendarDays;
   };
 
-  // Fetch tasks for current month
+  // Fetch tasks for current month (Concurrent Multi-Project Fetching)
   useEffect(() => {
-    if (!projectId) return;
+    const idsToFetch = projectIds && projectIds.length > 0 ? projectIds : (projectId ? [projectId] : []);
+    
+    if (idsToFetch.length === 0) return;
 
     const fetchTasks = async () => {
       setLoading(true);
@@ -131,8 +118,14 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
         const startDate = new Date(year, month, 1).toISOString().split('T')[0];
         const endDate = new Date(year, month + 1, 0).toISOString().split('T')[0];
 
-        const result = await taskService.getCalendarTasks(projectId, startDate, endDate);
-        setTasks(result.tasks || []);
+        // Fetch all projects at once
+        const responses = await Promise.all(
+          idsToFetch.map(id => taskService.getCalendarTasks(id, startDate, endDate))
+        );
+
+        // Merge all tasks into a single array
+        const combinedTasks = responses.flatMap(result => result.tasks || []);
+        setTasks(combinedTasks);
       } catch (error) {
         console.error('Failed to fetch calendar tasks:', error);
         setTasks([]);
@@ -142,7 +135,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
     };
 
     fetchTasks();
-  }, [projectId, currentDate]);
+  }, [projectId, JSON.stringify(projectIds), currentDate]); // Use stringify to prevent deep equality re-renders
 
   const getTasksForDay = (date: Date): CalendarTask[] => {
     return tasks.filter((task) => {
@@ -155,13 +148,8 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
     });
   };
 
-  const previousMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
-  };
-
-  const nextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
-  };
+  const previousMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+  const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
 
   const calendarDays = getCalendarDays();
   const monthYear = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
@@ -184,17 +172,11 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
     >
       {/* Month Navigation */}
       <div className="flex items-center justify-between mb-4 px-2">
-        <button
-          onClick={previousMonth}
-          className="p-2 hover:bg-[#1F2937] rounded transition-colors"
-        >
+        <button onClick={previousMonth} className="p-2 hover:bg-[#1F2937] rounded transition-colors">
           <ChevronLeft size={18} className="text-slate-400" />
         </button>
         <span className="text-sm font-semibold text-slate-300">{monthYear}</span>
-        <button
-          onClick={nextMonth}
-          className="p-2 hover:bg-[#1F2937] rounded transition-colors"
-        >
+        <button onClick={nextMonth} className="p-2 hover:bg-[#1F2937] rounded transition-colors">
           <ChevronRight size={18} className="text-slate-400" />
         </button>
       </div>
@@ -207,7 +189,6 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
 
       {!loading && (
         <div className="grid grid-cols-7 gap-px bg-[#374151] border border-[#374151] rounded-xl flex-1 overflow-auto">
-          {/* Day labels */}
           {days.map((d, i) => (
             <div
               key={`day-label-${i}`}
@@ -219,7 +200,6 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
             </div>
           ))}
 
-          {/* Calendar days */}
           {calendarDays.map((d, i) => {
             const dayTasks = d.isCurrent ? getTasksForDay(d.date) : [];
             const today = new Date();
@@ -234,10 +214,8 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                 key={`cal-day-${i}`}
                 ref={(el) => { dayRefs.current[i] = el; }}
                 onMouseEnter={() => {
-                  if (dayTasks.length > 0) {
-                    handleMouseEnter(i);
-                  } else {
-                    // Instantly hide the tooltip if we hover over an empty day
+                  if (dayTasks.length > 0) handleMouseEnter(i);
+                  else {
                     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
                     setHoveredDayIndex(null);
                   }
@@ -247,27 +225,15 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                   dayTasks.length > 0 ? 'cursor-pointer hover:z-[60]' : ''
                 }`}
               >
-                <span
-                  className={`text-[12px] font-semibold ${
-                    isToday
-                      ? 'text-[#22C55E]'
-                      : d.isCurrent
-                        ? 'text-slate-300'
-                        : 'text-slate-600'
-                  }`}
-                >
+                <span className={`text-[12px] font-semibold ${isToday ? 'text-[#22C55E]' : d.isCurrent ? 'text-slate-300' : 'text-slate-600'}`}>
                   {d.day < 10 ? `0${d.day}` : d.day}
                 </span>
 
-                {/* Task indicators */}
                 <div className="mt-auto flex flex-col gap-1 w-full pb-1">
                   {dayTasks.length > 0 && (
                     <div className="flex gap-1 w-full px-1 flex-wrap">
                       {dayTasks.slice(0, 3).map((task, idx) => (
-                        <div
-                          key={idx}
-                          className={`h-1 flex-1 rounded-sm ${getTypeColor(task.type)} min-w-[8px]`}
-                        />
+                        <div key={idx} className={`h-1 flex-1 rounded-sm ${getTypeColor(task.type)} min-w-[8px]`} />
                       ))}
                       {dayTasks.length > 3 && (
                         <div className="text-[8px] text-slate-500">+{dayTasks.length - 3}</div>
@@ -290,24 +256,16 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
 
         if (!rect || dayTasks.length === 0) return null;
 
-        // Smart Positioning Logic
         const tooltipWidth = 256;
-        const padding = 16; // 16px safe margin from screen edges
+        const padding = 16; 
         
-        // 1. Clamp X-Axis (Prevents left/right edge cutoff)
         const cellCenter = rect.left + rect.width / 2;
         let leftPos = cellCenter - (tooltipWidth / 2);
-        
-        if (leftPos < padding) {
-          leftPos = padding; 
-        } else if (leftPos + tooltipWidth > window.innerWidth - padding) {
-          leftPos = window.innerWidth - tooltipWidth - padding;
-        }
+        if (leftPos < padding) leftPos = padding; 
+        else if (leftPos + tooltipWidth > window.innerWidth - padding) leftPos = window.innerWidth - tooltipWidth - padding;
 
-        // 2. Smart Y-Axis (Flips below the cell if it gets too close to the top window edge)
         let topPos = rect.top - 12;
         let transform = 'translateY(-100%)';
-        
         if (topPos - 200 < 0) { 
           topPos = rect.bottom + 12;
           transform = 'translateY(0)';
@@ -316,12 +274,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
         return createPortal(
           <div
             className="fixed bg-[#1F2937] border border-[#374151] rounded-lg p-2 shadow-2xl max-h-48 overflow-y-auto z-[9999]"
-            style={{
-              top: `${topPos}px`,
-              left: `${leftPos}px`,
-              transform: transform,
-              width: `${tooltipWidth}px`,
-            }}
+            style={{ top: `${topPos}px`, left: `${leftPos}px`, transform: transform, width: `${tooltipWidth}px` }}
             onMouseEnter={() => handleMouseEnter(hoveredDayIndex)}
             onMouseLeave={handleMouseLeave}
           >
