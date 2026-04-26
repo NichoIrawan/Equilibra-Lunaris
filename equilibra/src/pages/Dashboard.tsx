@@ -26,8 +26,6 @@ export const DashboardPage: React.FC = () => {
   const displayName = user ? getDisplayName(user) : '…';
   const [searchQuery, setSearchQuery] = React.useState('');
 
-  const { leadProjects, collaboratingProjects } = useProjects();
-  const allProjects = [...leadProjects, ...collaboratingProjects];
   const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
   const currentMonthDays = Array.from({ length: 31 }, (_, i) => ({ day: i + 1, isCurrent: true }));
   const nextMonthDays = Array.from({ length: 4 }, (_, i) => ({ day: i + 1, isCurrent: false }));
