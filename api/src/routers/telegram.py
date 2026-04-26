@@ -27,12 +27,11 @@ async def telegram_webhook(request: Request):
         chat_id = update["message"]["chat"]["id"]
         text = update["message"].get("text", "")
         
-        # Jika user mengirim command /start
         if text == "/start":
             reply_text = (
                 f"Halo! 👋\n\n"
-                f"Chat ID kamu adalah: `{chat_id}`\n\n"
-                f"Silakan *copy* Chat ID di atas dan masukkan ke dalam aplikasi kita untuk menerima notifikasi."
+                f"Chat ID kamu adalah: <code>{chat_id}</code>\n\n"
+                f"Silakan <b>copy</b> Chat ID di atas dan masukkan ke dalam aplikasi kita untuk menerima notifikasi."
             )
             await send_telegram_message(chat_id, reply_text)
         if text == "/help":
@@ -45,15 +44,11 @@ async def telegram_webhook(request: Request):
     return {"status": "ok"}
 
 # ==========================================
-# PENDEKATAN 2: GET UPDATES (Bagus untuk Localhost)
+# PENDEKATAN 2: GET UPDATES 
 # ==========================================
 @router.get("/telegram/get-chat-id")
 async def get_telegram_chat_id():
-    """
-    Cara pakai: 
-    1. Kirim pesan /start ke bot Telegram kamu.
-    2. Buka http://127.0.0.1:8000/telegram/get-chat-id di browser.
-    """
+   
     if not settings.telegram_bot_token:
         raise HTTPException(status_code=400, detail="Telegram bot token belum dikonfigurasi.")
         
@@ -84,3 +79,6 @@ async def get_telegram_chat_id():
             "status": "waiting", 
             "message": "Belum ada pesan baru. Coba kirim pesan ke Bot Telegram kamu sekarang!"
         }
+        
+
+
