@@ -41,11 +41,14 @@ interface MeetingIntelligenceTabProps {
   projectId: string | number;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onMeetingCreated?: (data: any) => Promise<any>;
+  /** Called after tasks are committed to the board so the parent can refresh */
+  onTasksCreated?: () => void | Promise<void>;
 }
 
 export const MeetingIntelligenceTab: React.FC<MeetingIntelligenceTabProps> = ({
   projectId,
   onMeetingCreated,
+  onTasksCreated,
 }) => {
   const [view, setView] = useState<
     "choice" | "upload" | "link" | "loading" | "processing" | "result"
@@ -64,30 +67,28 @@ export const MeetingIntelligenceTab: React.FC<MeetingIntelligenceTabProps> = ({
     let interval: ReturnType<typeof setInterval>;
     if (view === "processing") {
       interval = setInterval(async () => {
-        const apiBase = import.meta.env.VITE_BACKEND_URL ?? "http://localhost:8000/api";
-        const response = await fetch(
-          `${apiBase}/meetings/poll-analysis`,
-          { credentials: "include" }
-        );
+        const apiBase =
+          import.meta.env.VITE_BACKEND_URL ?? "http://localhost:8000/api";
+        const response = await fetch(`${apiBase}/meetings/poll-analysis`, {
+          credentials: "include",
+        });
         if (response.ok) {
           const data = await response.json();
           if (data.status === "success" && data.data && data.data.mom) {
             try {
-              const momContent = JSON.parse(latest.mom_content);
-              const momData = momContent.mom || momContent;
-
-              const transformedTasks: Task[] = (
-                latest.proposed_tasks || []
-              ).map((t: Record<string, unknown>, i: number) => ({
-                id: `task-bg-${i}-${Date.now()}`,
-                title: t.title,
-                pic: t.assignee_username || "TBD",
-                priority:
-                  ((t.priority as string)?.toLowerCase() as Task["priority"]) ||
-                  "medium",
-                due_date: t.due_date || "TBD",
-                completed: false,
-              }));
+              const transformedTasks: Task[] = (data.proposed_tasks || []).map(
+                (t: Record<string, unknown>, i: number) => ({
+                  id: `task-bg-${i}-${Date.now()}`,
+                  title: t.title,
+                  pic: t.assignee_username || "TBD",
+                  priority:
+                    ((
+                      t.priority as string
+                    )?.toLowerCase() as Task["priority"]) || "medium",
+                  due_date: t.due_date || "TBD",
+                  completed: false,
+                })
+              );
 
               setResult({
                 mom: data.data.mom,
@@ -117,7 +118,7 @@ export const MeetingIntelligenceTab: React.FC<MeetingIntelligenceTabProps> = ({
     }
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, lastMeetingCount]);
+  }, [view, onMeetingCreated]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -132,7 +133,8 @@ export const MeetingIntelligenceTab: React.FC<MeetingIntelligenceTabProps> = ({
 
     try {
       // Hitting backend directly to avoid Vite proxy multipart form drop bugs
-      const apiBase = import.meta.env.VITE_BACKEND_URL ?? "http://localhost:8000/api";
+      const apiBase =
+        import.meta.env.VITE_BACKEND_URL ?? "http://localhost:8000/api";
       const response = await fetch(`${apiBase}/analyze-meeting`, {
         method: "POST",
         body: formData,
@@ -184,7 +186,8 @@ export const MeetingIntelligenceTab: React.FC<MeetingIntelligenceTabProps> = ({
     setError(null);
 
     try {
-      const apiBase = import.meta.env.VITE_BACKEND_URL ?? "http://localhost:8000/api";
+      const apiBase =
+        import.meta.env.VITE_BACKEND_URL ?? "http://localhost:8000/api";
       const response = await fetch(
         `${apiBase}/invite-bot?meeting_url=${encodeURIComponent(
           meetingUrl
@@ -247,6 +250,8 @@ export const MeetingIntelligenceTab: React.FC<MeetingIntelligenceTabProps> = ({
       }
 
       setSynced(true);
+      // Notify parent to refresh the Kanban board
+      if (onTasksCreated) await onTasksCreated();
       setTimeout(() => setSynced(false), 3000);
     } catch (err) {
       console.error("Failed to sync to project", err);
@@ -460,10 +465,11 @@ export const MeetingIntelligenceTab: React.FC<MeetingIntelligenceTabProps> = ({
               <button
                 onClick={syncToProject}
                 disabled={syncing || synced || result.tasks.length === 0}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-[13px] transition-all shadow-lg ${synced
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-[13px] transition-all shadow-lg ${
+                  synced
                     ? "bg-green-500 text-white"
                     : "bg-[#3B82F6] text-white hover:bg-[#2563EB] hover:scale-105 active:scale-95 disabled:opacity-50"
-                  }`}
+                }`}
               >
                 {syncing ? (
                   <>
@@ -557,25 +563,28 @@ export const MeetingIntelligenceTab: React.FC<MeetingIntelligenceTabProps> = ({
                     result.tasks.map((task) => (
                       <div
                         key={task.id}
-                        className={`group relative p-4 rounded-xl border border-[#374151] transition-all hover:bg-[#1F2937] ${task.completed ? "opacity-50" : "bg-[#0B0E14]/40"
-                          }`}
+                        className={`group relative p-4 rounded-xl border border-[#374151] transition-all hover:bg-[#1F2937] ${
+                          task.completed ? "opacity-50" : "bg-[#0B0E14]/40"
+                        }`}
                       >
                         <div className="flex items-start gap-3">
                           <button
                             onClick={() => toggleTask(task.id)}
-                            className={`mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${task.completed
+                            className={`mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
+                              task.completed
                                 ? "bg-green-500 border-green-500 text-white"
                                 : "border-[#374151] hover:border-[#3B82F6]"
-                              }`}
+                            }`}
                           >
                             {task.completed && <CheckCircle2 size={12} />}
                           </button>
                           <div className="flex-1 min-w-0">
                             <p
-                              className={`text-[13px] font-semibold text-white leading-snug ${task.completed
+                              className={`text-[13px] font-semibold text-white leading-snug ${
+                                task.completed
                                   ? "line-through text-slate-500"
                                   : ""
-                                }`}
+                              }`}
                             >
                               {task.title}
                             </p>
@@ -587,12 +596,13 @@ export const MeetingIntelligenceTab: React.FC<MeetingIntelligenceTabProps> = ({
                                 <Calendar size={10} /> {task.due_date}
                               </span>
                               <span
-                                className={`px-1.5 py-0.5 rounded border ${task.priority === "high"
+                                className={`px-1.5 py-0.5 rounded border ${
+                                  task.priority === "high"
                                     ? "bg-red-500/10 text-red-400 border-red-500/20"
                                     : task.priority === "medium"
-                                      ? "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
-                                      : "bg-green-500/10 text-green-500 border-green-500/20"
-                                  }`}
+                                    ? "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
+                                    : "bg-green-500/10 text-green-500 border-green-500/20"
+                                }`}
                               >
                                 {task.priority}
                               </span>

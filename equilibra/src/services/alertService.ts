@@ -28,7 +28,7 @@ export const alertService = {
     projectId: number | string,
     tasks: ExtractedTaskPayload[],
   ): Promise<{ status: string; tasks_created: number }> => {
-    return await apiFetch("/api/v1/tasks/batch-review", {
+    return await apiFetch("/tasks/batch-review", {
       method: "POST",
       body: JSON.stringify({ alert_id: alertId, project_id: projectId, tasks }),
     });

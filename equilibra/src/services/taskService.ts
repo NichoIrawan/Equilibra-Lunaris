@@ -13,6 +13,20 @@ export const taskService = {
     return tasks.filter((t) => String(t.lead_assignee_id) === String(userId));
   },
 
+  getCalendarTasks: async (
+    projectId: string | number,
+    startDate?: string,
+    endDate?: string,
+  ): Promise<any> => {
+    const params = new URLSearchParams();
+    if (startDate) params.append("start_date", startDate);
+    if (endDate) params.append("end_date", endDate);
+
+    const queryString = params.toString();
+    const url = `/v1/tasks/calendar/${projectId}${queryString ? `?${queryString}` : ""}`;
+    return await apiFetch<any>(url);
+  },
+
   createTask: async (data: Task): Promise<Task> => {
     return await apiFetch<Task>("/tasks", {
       method: "POST",
@@ -27,6 +41,16 @@ export const taskService = {
     return await apiFetch<Task>(`/tasks/${id}`, {
       method: "PUT",
       body: JSONBig.stringify(data),
+    });
+  },
+
+  updateTaskStatus: async (
+    id: number | string,
+    bucketId: string | number,
+  ): Promise<Task> => {
+    return await apiFetch<Task>(`/tasks/${id}`, {
+      method: "PUT",
+      body: JSONBig.stringify({ bucket_id: bucketId }),
     });
   },
 

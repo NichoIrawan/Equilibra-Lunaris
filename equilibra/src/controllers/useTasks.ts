@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import type { Task, TaskType } from "../models";
+import type { Task, TaskType, BucketState } from "../models";
 import { taskService } from "../services/taskService";
 import { useToast } from "../design-system/Toast";
 
@@ -139,6 +139,39 @@ export const useTasks = (projectId?: string | number) => {
     [projectId, fetchTasks],
   );
 
+  const updateTaskStatus = useCallback(
+    async (
+      id: string | number,
+      status: BucketState,
+      bucketId: string | number,
+    ) => {
+      let prevTask: Task | undefined;
+
+      setTasks((prev) => {
+        const newTasks = [...prev];
+        const idx = newTasks.findIndex((t) => String(t.id) === String(id));
+        if (idx !== -1) {
+          prevTask = { ...newTasks[idx] };
+          newTasks[idx] = { ...newTasks[idx], status, bucket_id: bucketId };
+        }
+        return newTasks;
+      });
+
+      try {
+        await taskService.updateTaskStatus(id, bucketId);
+      } catch (err) {
+        console.error(err);
+        showToast("Failed to update task status", "error");
+        if (prevTask) {
+          setTasks((prev) =>
+            prev.map((t) => (String(t.id) === String(id) ? prevTask! : t)),
+          );
+        }
+      }
+    },
+    [showToast],
+  );
+
   return {
     tasks,
     loading,
@@ -147,5 +180,6 @@ export const useTasks = (projectId?: string | number) => {
     updateTask,
     deleteTask,
     reorderTasks,
+    updateTaskStatus,
   };
 };

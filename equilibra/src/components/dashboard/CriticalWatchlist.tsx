@@ -17,12 +17,19 @@ const statusVariant = (status: string): 'critical' | 'warning' | 'default' => {
 
 interface CriticalWatchlistProps {
   onNavigate: (projectId: number | string) => void;
+  searchQuery?: string;
 }
 
-export const CriticalWatchlist: React.FC<CriticalWatchlistProps> = ({ onNavigate }) => {
+export const CriticalWatchlist: React.FC<CriticalWatchlistProps> = ({ onNavigate, searchQuery }) => {
   const { leadProjects, collaboratingProjects, loading } = useProjects();
   const allProjects = [...leadProjects, ...collaboratingProjects];
-  const criticalProjects = allProjects.filter(p => p.status && CRITICAL_STATUSES.includes(p.status));
+  let criticalProjects = allProjects.filter(p => p.status && CRITICAL_STATUSES.includes(p.status));
+  
+  if (searchQuery) {
+    criticalProjects = criticalProjects.filter(p => 
+      p.name?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }
 
   return (
     <SurfaceCard title="Critical Watchlist" subtitle="Contextual Project Bottlenecks" icon={Filter} rightElement={<MoreHorizontal className="text-slate-500 cursor-pointer" size={18} />}>

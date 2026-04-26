@@ -19,33 +19,108 @@ from api.src.services.database.id_generator import _generator
 
 from api.src.services.database.alerts import DatabaseAlert, db_create_alert
 
+
+from api.src.services.telegram_service import send_telegram_message
+
 router = APIRouter(tags=["Meetings"])
 
-async def _create_draft_approval_alert(user_uuid: str, project_id: int, meeting_title: str) -> int:
-    """Create a DRAFT_APPROVAL alert in the DB and return its new ID."""
+
+def _get_user_chat_id(user_id: str) -> Optional[str]:
+    """Mengambil Telegram Chat ID user dari database public.users."""
+    conn = _get_conn()
+    cur = None
     try:
-        title = f"Review Extracted Tasks: {meeting_title}"
-        desc = "The AI has finished extracting tasks from the meeting. Please review and confirm which ones should be added to the backlog."
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         
+        cur.execute(
+            "SELECT telegram_chat_id FROM public.users WHERE id = %s LIMIT 1;",
+            (user_id,)
+        )
+        row = cur.fetchone()
+        
+        if row and row.get("telegram_chat_id"):
+            chat_id = row["telegram_chat_id"].strip()
+           
+            if chat_id: 
+                return chat_id
+                
+        return None
+    except Exception as e:
+        print(f"Error fetching Telegram Chat ID: {e}")
+        return None
+    finally:
+        if cur is not None:
+            cur.close()
+        _put_conn(conn)
+
+
+
+async def _create_draft_approval_alert(user_uuid: str, project_id: int, meeting_title: str, is_success: bool = True, error_msg: str = "") -> int:
+    """Create a DRAFT_APPROVAL or ANALYSIS_FAILED alert in the DB and return its new ID."""
+    try:
+        if is_success:
+            title = f"Review Extracted Tasks: {meeting_title}"
+            desc = "The AI has finished extracting tasks from the meeting. Please review and confirm which ones should be added to the backlog."
+            alert_type = "DRAFT_APPROVAL"
+            severity = "info"
+        else:
+            title = f"Gagal Analisis: {meeting_title}"
+            desc = f"AI mengalami kendala saat mengekstrak task. Detail: {error_msg}"
+            alert_type = "ANALYSIS_FAILED"
+            severity = "critical"
+            
         alert_data = DatabaseAlert(
-            user_id=int(user_uuid) if user_uuid.isdigit() else None, # Assuming user_uuid is GH ID string
+            user_id=int(user_uuid) if user_uuid.isdigit() else None, 
             project_id=project_id,
             title=title,
             description=desc,
-            type="DRAFT_APPROVAL",
-            severity="info"
+            type=alert_type,
+            severity=severity
         )
         
-        # Override user_id logic if needed, but db_create_alert handles coercion to string
         alert_data.user_id = user_uuid 
         
+        
         row = await db_create_alert(alert_data)
-        return row["id"] if row else -1
+        alert_id = row["id"] if row else -1
+        
+        
+        if alert_id != -1:
+            chat_id = _get_user_chat_id(user_uuid)
+            
+           
+            if chat_id:
+                
+                s_title = title.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+                s_desc = desc.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+                
+                if is_success:
+                    telegram_text = (
+                        f"✨ <b>Tugas Baru Menunggu Review!</b>\n\n"
+                        f"<b>{s_title}</b>\n"
+                        f"{s_desc}\n\n"
+                        f"Silakan buka aplikasi untuk menyetujui tugas ke backlog. 🚀"
+                    )
+                else:
+                    telegram_text = (
+                        f"❌ <b>Gagal Menganalisis Meeting!</b>\n\n"
+                        f"<b>{s_title}</b>\n"
+                        f"{s_desc}\n\n"
+                        f"Silakan coba upload kembali atau periksa ukuran/format file Anda."
+                    )
+                
+                try:
+                    await send_telegram_message(chat_id, telegram_text)
+                except Exception as tg_err:
+                    print(f"Alert tersimpan di DB, tapi gagal kirim ke Telegram: {tg_err}")
+        
+        
+        return alert_id
     except Exception as e:
         print(f"Failed to create alert: {e}")
         return -1
 
-TEMP_ANALYSIS_RESULTS = {}  # Temporary in-memory storage for results
+TEMP_ANALYSIS_RESULTS = {}  
 
 
 # ==========================================
@@ -280,12 +355,14 @@ async def analyze_meeting_endpoint(
         except Exception as exc:
             print(f"Gemini request failed: {exc}")
             # If it's a connection error, it might be due to size.
+            await _create_draft_approval_alert(str(current_user.get("id")), project_id, "Video/Audio Upload", is_success=False, error_msg="Gagal memproses file audio/video. Format mungkin tidak didukung atau ukuran terlalu besar.")
             return _fallback_analysis_payload(f"api-error: {str(exc)[:50]}")
 
         try:
             analysis_result = await _parse_gemini_response(response)
         except Exception as exc:
             print(f"Gemini JSON parse failed: {exc}")
+            await _create_draft_approval_alert(str(current_user.get("id")), project_id, "Video/Audio Upload", is_success=False, error_msg="Format output AI tidak valid.")
             return _fallback_analysis_payload("invalid-json")
 
         mom_data = analysis_result.get("mom", {})
@@ -484,6 +561,7 @@ async def process_video_in_background(bot_id: str, user_uuid: str, project_id: i
         
     except Exception as e:
         print(f"❌ [BACKGROUND] Gagal memproses: {str(e)}")
+        await _create_draft_approval_alert(str(user_uuid), project_id, "Live Meeting", is_success=False, error_msg="Terjadi kendala teknis saat memproses rekaman meeting.")
 
 
 # ==========================================

@@ -23,6 +23,7 @@ class DatabaseTask(BaseModel):
     type: str  # CODE, REQUIREMENT, DESIGN, OTHER
     weight: int  # Points (1-8)
     branch_name: Optional[str] = None
+    scheduled_at: Optional[datetime] = None
     last_activity_at: Optional[datetime] = None
     order_idx: Optional[int] = None
     created_at: Optional[datetime] = None
@@ -35,6 +36,12 @@ def db_create_task(task: DatabaseTask):
     cur = None
     try:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        
+        # Debug: log received task data
+        print(f"DEBUG: Received task data:")
+        print(f"  title: {task.title}")
+        print(f"  scheduled_at (raw): {task.scheduled_at}")
+        print(f"  scheduled_at (type): {type(task.scheduled_at)}")
 
         # Resolve bucket_id if it's 'draft' or missing
         target_bucket_id = task.bucket_id
@@ -69,8 +76,9 @@ def db_create_task(task: DatabaseTask):
             "type": task.type,
             "weight": task.weight,
             "branch_name": task.branch_name,
+            "scheduled_at": task.scheduled_at,
             "last_activity_at": task.last_activity_at,
-            "order_idx": assigned_order_idx,
+            "order_idx": assigned_order_idx,           
         }
 
         columns = []
@@ -81,13 +89,30 @@ def db_create_task(task: DatabaseTask):
                 columns.append(k)
                 placeholders.append("%s")
                 params.append(v)
+        
+        # Debug: log what's being inserted
+        print(f"DEBUG: Columns to insert: {columns}")
+        print(f"DEBUG: scheduled_at in params: {'scheduled_at' in columns}")
+        if 'scheduled_at' in columns:
+            idx = columns.index('scheduled_at')
+            print(f"DEBUG: scheduled_at value: {params[idx]}")
+        # for k, v in mapping.items():
+        #     if v is not None:
+        #         columns.append(k)
+        #         placeholders.append("%s")
+        #         params.append(v)
 
         if not columns:
             raise HTTPException(status_code=400, detail="No data provided for insert")
         
         cols_sql = ", ".join(columns)
         vals_sql = ", ".join(placeholders)
-        sql = f"INSERT INTO public.tasks ({cols_sql}) VALUES ({vals_sql}) RETURNING id, project_id, bucket_id, meeting_id, parent_task_id, lead_assignee_id, suggested_assignee_id, title, description, type, weight, branch_name, last_activity_at, order_idx, created_at, updated_at;"
+        # Build RETURNING clause - include all inserted columns plus timestamp columns
+        # Use a set to avoid duplicates, then preserve order
+        return_set = set(columns) | {'id', 'created_at', 'updated_at'}
+        return_cols = [c for c in ['id', 'project_id', 'bucket_id', 'meeting_id', 'parent_task_id', 'lead_assignee_id', 'suggested_assignee_id', 'title', 'description', 'type', 'weight', 'branch_name', 'scheduled_at', 'last_activity_at', 'order_idx', 'created_at', 'updated_at'] if c in return_set]
+        return_sql = ", ".join(return_cols)
+        sql = f"INSERT INTO public.tasks ({cols_sql}) VALUES ({vals_sql}) RETURNING {return_sql};"
 
         cur.execute(sql, params)
         conn.commit()
@@ -104,22 +129,19 @@ def db_create_task(task: DatabaseTask):
             cur.close()
         _put_conn(conn)
 
-
-
 @db_router.get("/tasks")
 def db_get_tasks():
     conn = _get_conn()
     cur = None
     try:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute("SELECT id, project_id, bucket_id, meeting_id, parent_task_id, lead_assignee_id, suggested_assignee_id, title, description, type, weight, branch_name, last_activity_at, order_idx, created_at, updated_at FROM public.tasks;")
+        cur.execute("SELECT id, project_id, bucket_id, meeting_id, parent_task_id, lead_assignee_id, suggested_assignee_id, title, description, type, weight, branch_name, scheduled_at, last_activity_at, order_idx, created_at, updated_at FROM public.tasks;")
         rows = cur.fetchall()
         return rows
     finally:
         if cur is not None:
             cur.close()
         _put_conn(conn)
-
 
 @db_router.get("/tasks/{task_id}")
 def db_get_task_by_id(task_id: int):
@@ -140,7 +162,6 @@ def db_get_task_by_id(task_id: int):
             cur.close()
         _put_conn(conn)
 
-
 class TaskUpdate(BaseModel):
     project_id: Optional[SafeId] = None
     bucket_id: Optional[SafeId] = None
@@ -153,6 +174,7 @@ class TaskUpdate(BaseModel):
     type: Optional[str] = None
     weight: Optional[int] = None
     branch_name: Optional[str] = None
+    scheduled_at: Optional[datetime] = None
     last_activity_at: Optional[datetime] = None
     order_idx: Optional[int] = None
 
@@ -171,7 +193,7 @@ def db_update_task(task_id: int, task_data: TaskUpdate, background_tasks: Backgr
         params = list(update_data.values())
         params.append(task_id)
         
-        sql = f"UPDATE public.tasks SET {set_clause}, updated_at = NOW() WHERE id = %s RETURNING id, project_id, bucket_id, meeting_id, parent_task_id, lead_assignee_id, suggested_assignee_id, title, description, type, weight, branch_name, last_activity_at, order_idx, created_at, updated_at;"
+        sql = f"UPDATE public.tasks SET {set_clause}, updated_at = NOW() WHERE id = %s RETURNING id, project_id, bucket_id, meeting_id, parent_task_id, lead_assignee_id, suggested_assignee_id, title, description, type, weight, branch_name, scheduled_at, last_activity_at, order_idx, created_at, updated_at;"
         
         cur.execute(sql, params)
         conn.commit()

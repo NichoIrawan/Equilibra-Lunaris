@@ -63,8 +63,8 @@ export const ProjectDetailsPage: React.FC<ProjectDetailsProps> = ({ projectId })
   const { refreshDashboard } = useDashboard(projectId);
   // Keep mutation hooks — they still POST/PUT/DELETE via the original endpoints
   const { createBucket, reorderBuckets, deleteBucket } = useBuckets(projectId);
-  const { createTask, updateTask, deleteTask, reorderTasks } = useTasks(projectId);
-  const { meetings, loading: meetingsLoading, createMeeting, deleteMeeting } = useMeetings(projectId);
+  const { createTask, updateTask, deleteTask, reorderTasks, updateTaskStatus } = useTasks(projectId);
+  const { meetings, loading: meetingsLoading, createMeeting, deleteMeeting, refreshMeetings } = useMeetings(projectId);
 
   const bucketsLoading = boardLoading;
   const tasksLoading = boardLoading;
@@ -81,6 +81,8 @@ export const ProjectDetailsPage: React.FC<ProjectDetailsProps> = ({ projectId })
   const handleUpdateTask = async (taskId: number | string, data: Partial<Task>) => {
     await updateTask(taskId, data);
     await Promise.all([refreshBoard(true), refreshDashboard(true)]);
+    // Keep the modal's task prop in sync so it reflects the saved state
+    setSelectedTaskForEdit(prev => prev && String(prev.id) === String(taskId) ? { ...prev, ...data } : prev);
   };
 
   const handleDropTask = async (taskId: number | string, newBucketId: number | string, targetTaskId?: number | string) => {
@@ -106,6 +108,11 @@ export const ProjectDetailsPage: React.FC<ProjectDetailsProps> = ({ projectId })
 
     // Build reordered IDs
     const taskIds = filteredTasks.map(t => t.id!);
+
+    const bucket = buckets.find(b => String(b.id) === String(newBucketId));
+    if (bucket && bucket.state && updateTaskStatus) {
+      await updateTaskStatus(taskId, bucket.state, newBucketId);
+    }
 
     await reorderTasks(newBucketId, taskIds);
     await Promise.all([refreshBoard(true), refreshDashboard(true)]);
@@ -337,7 +344,8 @@ export const ProjectDetailsPage: React.FC<ProjectDetailsProps> = ({ projectId })
           <div className="space-y-6">
             <MeetingIntelligenceTab
               projectId={projectId}
-              onMeetingCreated={createMeeting}
+              onMeetingCreated={() => refreshMeetings()}
+              onTasksCreated={async () => { await Promise.all([refreshBoard(true), refreshDashboard(true)]); }}
             />
 
             <SurfaceCard

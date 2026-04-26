@@ -62,5 +62,5 @@ export const useMeetings = (projectId: string | number) => {
     [showToast],
   );
 
-  return { meetings, loading, error, createMeeting, deleteMeeting };
+  return { meetings, loading, error, createMeeting, deleteMeeting, refreshMeetings: fetchMeetings };
 };
