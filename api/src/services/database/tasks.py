@@ -188,7 +188,12 @@ def db_update_task(task_id: int, task_data: TaskUpdate, background_tasks: Backgr
         update_data = task_data.dict(exclude_unset=True)
         if not update_data:
             raise HTTPException(status_code=400, detail="No data provided for update")
-        
+            
+        # Prevent UniqueViolation on tasks_bucket_order_idx_key 
+        # when moving a task to a new bucket without specifying a new order_idx
+        if "bucket_id" in update_data and "order_idx" not in update_data:
+            update_data["order_idx"] = -(task_id % 100000000) - 1000
+
         set_clause = ", ".join([f"{k} = %s" for k in update_data.keys()])
         params = list(update_data.values())
         params.append(task_id)
