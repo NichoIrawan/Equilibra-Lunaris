@@ -73,11 +73,8 @@ export const MeetingIntelligenceTab: React.FC<MeetingIntelligenceTabProps> = ({
           const data = await response.json();
           if (data.status === "success" && data.data && data.data.mom) {
             try {
-              const momContent = JSON.parse(latest.mom_content);
-              const momData = momContent.mom || momContent;
-
               const transformedTasks: Task[] = (
-                latest.proposed_tasks || []
+                data.proposed_tasks || []
               ).map((t: Record<string, unknown>, i: number) => ({
                 id: `task-bg-${i}-${Date.now()}`,
                 title: t.title,
@@ -117,7 +114,7 @@ export const MeetingIntelligenceTab: React.FC<MeetingIntelligenceTabProps> = ({
     }
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, lastMeetingCount]);
+  }, [view, onMeetingCreated]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

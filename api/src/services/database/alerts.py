@@ -80,7 +80,12 @@ async def db_create_alert(alert_data: DatabaseAlert):
             
             if user_row and user_row.get("telegram_chat_id"):
                 chat_id = user_row["telegram_chat_id"]
-                msg = f"🔔 *{alert_data.title}*\n\n{alert_data.description}"
+                
+                # Sederhanakan sanitize HTML (prevent bad tags)
+                s_title = alert_data.title.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;') if alert_data.title else ""
+                s_desc = alert_data.description.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;') if alert_data.description else ""
+                
+                msg = f"🔔 <b>{s_title}</b>\n\n{s_desc}"
                 await send_telegram_message(chat_id, msg)
         except Exception as tele_err:
             print(f"Failed to send Telegram notification: {tele_err}")
