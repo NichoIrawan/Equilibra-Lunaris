@@ -87,6 +87,7 @@ export const useBoard = (projectId: string | number) => {
   return {
     buckets,
     tasks,
+    setTasks,
     loading,
     error,
     refreshBoard: fetchBoard,

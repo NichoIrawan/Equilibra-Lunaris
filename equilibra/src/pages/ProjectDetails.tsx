@@ -59,7 +59,7 @@ export const ProjectDetailsPage: React.FC<ProjectDetailsProps> = ({ projectId })
   const isManager = role?.toUpperCase() === 'MANAGER' || role?.toUpperCase() === 'OWNER';
   const { members } = useProjectMembers(projectId);
   // useBoard: single request for both buckets and tasks (strict data contract)
-  const { buckets, tasks, loading: boardLoading, refreshBoard } = useBoard(projectId);
+  const { buckets, tasks, loading: boardLoading, refreshBoard, setTasks } = useBoard(projectId);
   const { refreshDashboard } = useDashboard(projectId);
   // Keep mutation hooks — they still POST/PUT/DELETE via the original endpoints
   const { createBucket, reorderBuckets, deleteBucket } = useBuckets(projectId);
@@ -97,25 +97,44 @@ export const ProjectDetailsPage: React.FC<ProjectDetailsProps> = ({ projectId })
     // Calculate new position
     let newIndex = filteredTasks.length; // Default to end
     if (targetTaskId) {
-      const targetIndex = filteredTasks.findIndex(t => t.id === targetTaskId);
+      const targetIndex = filteredTasks.findIndex(t => String(t.id) === String(targetTaskId));
       if (targetIndex !== -1) {
         newIndex = targetIndex;
       }
     }
 
-    // Insert into new array
-    filteredTasks.splice(newIndex, 0, draggedTask);
+    // Insert into new array with updated bucket_id
+    filteredTasks.splice(newIndex, 0, { ...draggedTask, bucket_id: newBucketId });
+
+    // Re-assign order_idx for the target bucket
+    const reorderedBucketTasks = filteredTasks.map((t, idx) => ({ ...t, order_idx: idx }));
+
+    // Reconstruct all tasks for optimistic UI update
+    const otherTasks = tasks.filter(t => String(t.bucket_id) !== String(newBucketId) && String(t.id) !== String(taskId));
+    const optimisticTasks = [...otherTasks, ...reorderedBucketTasks];
+
+    // 1. Optimistic UI Update
+    setTasks(optimisticTasks);
 
     // Build reordered IDs
-    const taskIds = filteredTasks.map(t => t.id!);
+    const taskIds = reorderedBucketTasks.map(t => t.id!);
 
-    const bucket = buckets.find(b => String(b.id) === String(newBucketId));
-    if (bucket && bucket.state && updateTaskStatus) {
-      await updateTaskStatus(taskId, bucket.state, newBucketId);
+    // 2. Network Requests
+    try {
+      const bucket = buckets.find(b => String(b.id) === String(newBucketId));
+      if (bucket && bucket.state && updateTaskStatus) {
+        await updateTaskStatus(taskId, bucket.state, newBucketId);
+      }
+
+      await reorderTasks(newBucketId, taskIds);
+      // Run background refreshes without awaiting them to block the UI
+      refreshBoard(true);
+      refreshDashboard(true);
+    } catch (error) {
+      console.error("Failed to reorder tasks", error);
+      // Revert optimistic update by refreshing from server
+      refreshBoard(true);
     }
-
-    await reorderTasks(newBucketId, taskIds);
-    await Promise.all([refreshBoard(true), refreshDashboard(true)]);
   };
 
   const handleCreateMeeting = async (data: { project_id: number | string; title: string; date: string; time: string; duration?: string }) => {
