@@ -8,7 +8,7 @@ const TASK_TYPES: TaskType[] = ['CODE', 'REQUIREMENT', 'DESIGN', 'NON-CODE', 'OT
 interface TaskFormModalProps {
   projectId: number | string;
   onClose: () => void;
-  onSubmit: (data: { project_id: number | string; title: string; type: TaskType; weight: number; bucket_id?: number | string; scheduled_at?: string }) => Promise<void>;
+  onSubmit: (data: { project_id: number | string; title: string; type: TaskType; weight: number; bucket_id?: number | string; scheduled_at?: string | null }) => Promise<void>;
   initial?: Partial<Task>;
   title?: string;
 }
@@ -32,7 +32,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
       type,
       weight,
       bucket_id: initial.bucket_id,
-      scheduled_at: scheduledAt,
+      scheduled_at: scheduledAt || null,
     });
     setSaving(false);
     onClose();
