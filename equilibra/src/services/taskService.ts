@@ -13,11 +13,15 @@ export const taskService = {
     return tasks.filter((t) => String(t.lead_assignee_id) === String(userId));
   },
 
-  getCalendarTasks: async (projectId: string | number, startDate?: string, endDate?: string): Promise<any> => {
+  getCalendarTasks: async (
+    projectId: string | number,
+    startDate?: string,
+    endDate?: string,
+  ): Promise<any> => {
     const params = new URLSearchParams();
     if (startDate) params.append("start_date", startDate);
     if (endDate) params.append("end_date", endDate);
-    
+
     const queryString = params.toString();
     const url = `/v1/tasks/calendar/${projectId}${queryString ? `?${queryString}` : ""}`;
     return await apiFetch<any>(url);
@@ -44,7 +48,7 @@ export const taskService = {
     id: number | string,
     status: string,
   ): Promise<Task> => {
-    return await apiFetch<Task>(`/v1/tasks/${id}`, {
+    return await apiFetch<Task>(`/tasks/${id}`, {
       method: "PUT",
       body: JSONBig.stringify({ status }),
     });

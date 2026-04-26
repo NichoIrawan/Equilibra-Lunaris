@@ -10,8 +10,7 @@ from api.src.services.database.database import _get_conn, _put_conn, SafeId
 from api.src.services.database.tasks import db_create_task, db_update_task
 from api.src.services.database.id_generator import _generator
 
-router = APIRouter(prefix="/v1/tasks", tags=["Tasks"])
-
+router = APIRouter(tags=["Tasks"])
 
 # ---------------------------------------------------------------------------
 # Pydantic Schemas
