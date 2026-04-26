@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, CheckSquare } from 'lucide-react';
+import { ScheduleDatePicker } from '../ScheduleDatePicker';
 import type { Task, TaskType } from '../../models';
 
 const TASK_TYPES: TaskType[] = ['CODE', 'REQUIREMENT', 'DESIGN', 'NON-CODE', 'OTHER'];
@@ -7,7 +8,7 @@ const TASK_TYPES: TaskType[] = ['CODE', 'REQUIREMENT', 'DESIGN', 'NON-CODE', 'OT
 interface TaskFormModalProps {
   projectId: number | string;
   onClose: () => void;
-  onSubmit: (data: { project_id: number | string; title: string; type: TaskType; weight: number; bucket_id?: number | string }) => Promise<void>;
+  onSubmit: (data: { project_id: number | string; title: string; type: TaskType; weight: number; bucket_id?: number | string; scheduled_at?: string }) => Promise<void>;
   initial?: Partial<Task>;
   title?: string;
 }
@@ -18,13 +19,21 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
   const [taskTitle, setTaskTitle] = useState(initial.title ?? '');
   const [type, setType] = useState<TaskType>(initial.type ?? 'CODE');
   const [weight, setWeight] = useState(initial.weight ?? 3);
+  const [scheduledAt, setScheduledAt] = useState<string | undefined>(initial.scheduled_at ? new Date(initial.scheduled_at).toISOString() : undefined);
   const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!taskTitle.trim()) return;
     setSaving(true);
-    await onSubmit({ project_id: projectId, title: taskTitle.trim(), type, weight, bucket_id: initial.bucket_id });
+    await onSubmit({
+      project_id: projectId,
+      title: taskTitle.trim(),
+      type,
+      weight,
+      bucket_id: initial.bucket_id,
+      scheduled_at: scheduledAt,
+    });
     setSaving(false);
     onClose();
   };
@@ -83,7 +92,12 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
             </div>
           </div>
 
-
+          <ScheduleDatePicker
+            value={scheduledAt}
+            onChange={setScheduledAt}
+            label="Schedule Task"
+            placeholder="Optional: set task date & time"
+          />
 
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-lg text-[13px] text-slate-400 border border-[#374151] hover:text-white hover:border-slate-500 transition-all">

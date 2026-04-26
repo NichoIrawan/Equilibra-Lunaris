@@ -122,6 +122,7 @@ export interface Task {
   type: TaskType;
   weight: number; // VISIBLE TIER
   branch_name?: string;
+  scheduled_at?: Date | string; // New field for scheduling
   last_activity_at?: Date | string; // VISIBLE TIER
   warnStagnant?: boolean;
   isSuggested?: boolean;
