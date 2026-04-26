@@ -81,6 +81,8 @@ export const ProjectDetailsPage: React.FC<ProjectDetailsProps> = ({ projectId })
   const handleUpdateTask = async (taskId: number | string, data: Partial<Task>) => {
     await updateTask(taskId, data);
     await Promise.all([refreshBoard(true), refreshDashboard(true)]);
+    // Keep the modal's task prop in sync so it reflects the saved state
+    setSelectedTaskForEdit(prev => prev && String(prev.id) === String(taskId) ? { ...prev, ...data } : prev);
   };
 
   const handleDropTask = async (taskId: number | string, newBucketId: number | string, targetTaskId?: number | string) => {
@@ -338,6 +340,7 @@ export const ProjectDetailsPage: React.FC<ProjectDetailsProps> = ({ projectId })
             <MeetingIntelligenceTab
               projectId={projectId}
               onMeetingCreated={createMeeting}
+              onTasksCreated={() => Promise.all([refreshBoard(true), refreshDashboard(true)])}
             />
 
             <SurfaceCard
