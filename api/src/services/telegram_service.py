@@ -17,7 +17,7 @@ async def send_telegram_message(chat_id: str, text: str):
     payload = {
         "chat_id": chat_id,
         "text": text,
-        "parse_mode": "Markdown"
+        "parse_mode": "HTML"
     }
     
     print(f"\n[DEBUG] Attempting to send message to Chat ID: {chat_id}")

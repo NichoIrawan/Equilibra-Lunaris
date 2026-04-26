@@ -76,8 +76,8 @@ export const ProjectOverviewPM: React.FC<ProjectOverviewProps> = ({ projectId })
             </div>
           ))
         ) : (
-          criticalInsights.map((alert) => (
-            <div key={alert.id!} className="lg:col-span-4">
+          criticalInsights.map((alert, index) => (
+            <div key={alert.id || index} className="lg:col-span-4">
               <SurfaceCard className={`h-full ${alert.severity === 'critical' ? 'border-[#EF4444]/30 bg-[#EF4444]/5' : 'border-[#F59E0B]/30 bg-[#F59E0B]/5'}`}>
                 <div className={`flex items-center gap-3 mb-2 ${alert.severity === 'critical' ? 'text-[#EF4444]' : 'text-[#F59E0B]'}`}>
                   <AlertCircle size={18} />
@@ -114,8 +114,8 @@ export const ProjectOverviewPM: React.FC<ProjectOverviewProps> = ({ projectId })
                   </div>
                 ))
               ) : (
-                tasksAtRisk.map((task) => (
-                  <div key={task.id!} className="flex items-center gap-3 p-3 rounded-lg bg-[#1F2937] border border-[#374151] cursor-pointer hover:border-[#3B82F6] transition-colors">
+                tasksAtRisk.map((task, index) => (
+                  <div key={task.id || index} className="flex items-center gap-3 p-3 rounded-lg bg-[#1F2937] border border-[#374151] cursor-pointer hover:border-[#3B82F6] transition-colors">
                     <div className={`w-3 h-3 rounded-full border-2 ${task.warnStagnant ? 'border-[#EF4444]' : 'border-[#F59E0B]'}`} />
                     <div className="min-w-0 flex-1">
                       <p className="text-white text-[12px] font-semibold truncate">{task.title}</p>
@@ -145,8 +145,8 @@ export const ProjectOverviewPM: React.FC<ProjectOverviewProps> = ({ projectId })
                   </div>
                 ))
               ) : (
-                metrics.map(m => (
-                  <div key={m.id!}>
+                metrics.map((m, index) => (
+                  <div key={m.id || index}>
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-white text-[12px] font-bold uppercase tracking-wider">{m.label}</span>
                       <Badge variant={m.status as "success" | "warning" | "critical" | "primary" | "default" | "outline"} className="!text-[8px] uppercase">{m.status}</Badge>
@@ -233,8 +233,8 @@ export const ProjectOverviewPM: React.FC<ProjectOverviewProps> = ({ projectId })
                   </div>
                 ))
               ) : (
-                activities.map((act) => (
-                  <div key={act.id!} className="flex items-start gap-3">
+                activities.map((act, index) => (
+                  <div key={act.id || index} className="flex items-start gap-3">
                     <div className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] mt-1.5 flex-shrink-0" />
                     <div className="text-slate-400 text-[12px] min-w-0 flex-1">
                       <span className="text-white font-semibold truncate block">{act.user_name}</span>

@@ -1,4 +1,5 @@
 from typing import List, Literal, Optional
+from datetime import datetime, timedelta
 
 import psycopg2
 import psycopg2.extras
@@ -148,39 +149,76 @@ def batch_review_tasks(payload: BatchReviewPayload):
             cur.close()
         _put_conn(conn)
 
-@router.put("/{task_id}", status_code=200)
-def update_task_partial(task_id: SafeId, payload: TaskUpdatePayload):
+@router.get("/calendar/{project_id}")
+def get_calendar_tasks(project_id: SafeId, start_date: Optional[str] = None, end_date: Optional[str] = None):
     """
-    Partially update an existing task.
+    Get tasks with scheduled dates for calendar view.
+    
+    Query parameters:
+    - start_date: ISO format date string (YYYY-MM-DD) - defaults to first day of current month
+    - end_date: ISO format date string (YYYY-MM-DD) - defaults to last day of current month
     """
     conn = _get_conn()
     cur = None
     try:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         
-        update_data = payload.dict(exclude_unset=True, exclude_none=True)
-        if not update_data:
-            return {"status": "ok", "message": "No fields to update"}
-            
-        set_clause = ", ".join([f"{k} = %s" for k in update_data.keys()])
-        params = list(update_data.values())
-        params.append(task_id)
+        # Parse dates or use current month
+        today = datetime.now()
+        if start_date:
+            try:
+                start = datetime.fromisoformat(start_date)
+            except:
+                raise HTTPException(status_code=400, detail="Invalid start_date format. Use YYYY-MM-DD")
+        else:
+            start = today.replace(day=1)
         
-        sql = f"UPDATE public.tasks SET {set_clause}, updated_at = NOW() WHERE id = %s RETURNING id;"
-        cur.execute(sql, params)
-        row = cur.fetchone()
+        if end_date:
+            try:
+                end = datetime.fromisoformat(end_date)
+            except:
+                raise HTTPException(status_code=400, detail="Invalid end_date format. Use YYYY-MM-DD")
+        else:
+            # Last day of current month
+            if today.month == 12:
+                end = today.replace(year=today.year + 1, month=1, day=1) - timedelta(days=1)
+            else:
+                end = today.replace(month=today.month + 1, day=1) - timedelta(days=1)
         
-        if row is None:
-            raise HTTPException(status_code=404, detail="Task not found")
-            
-        conn.commit()
-        return {"status": "success", "message": "Task updated successfully"}
+        # Add 1 day to end_date to include the entire last day
+        end = end + timedelta(days=1)
+        
+        # Query tasks with scheduled_at within the date range
+        sql = """
+            SELECT 
+                t.id, t.project_id, t.title, t.description, 
+                t.type, t.weight, t.scheduled_at, t.lead_assignee_id,
+                t.bucket_id, b.state as status, b.name as bucket_name
+            FROM public.tasks t
+            LEFT JOIN public.buckets b ON t.bucket_id = b.id
+            WHERE t.project_id = %s 
+            AND t.scheduled_at IS NOT NULL
+            AND t.scheduled_at >= %s
+            AND t.scheduled_at < %s
+            ORDER BY t.scheduled_at ASC;
+        """
+        
+        cur.execute(sql, (project_id, start, end))
+        rows = cur.fetchall()
+        
+        # Format results
+        tasks = [dict(row) for row in rows]
+        return {
+            "project_id": project_id,
+            "start_date": start.isoformat(),
+            "end_date": end.isoformat(),
+            "tasks": tasks
+        }
+        
     except HTTPException:
-        conn.rollback()
         raise
-    except Exception as exc:
-        conn.rollback()
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     finally:
         if cur is not None:
             cur.close()
