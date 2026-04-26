@@ -16,6 +16,7 @@ import { MyQueue } from '../components/dashboard/MyQueue';
 import { CriticalWatchlist } from '../components/dashboard/CriticalWatchlist';
 import { useAuth } from '../auth/useAuth';
 import { getDisplayName } from '../auth/displayName';
+import { useProjects } from '../controllers/useProjects';
 
 import { useNavigate } from 'react-router-dom';
 
@@ -23,6 +24,10 @@ export const DashboardPage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const displayName = user ? getDisplayName(user) : '…';
+  const [searchQuery, setSearchQuery] = React.useState('');
+
+  const { leadProjects, collaboratingProjects } = useProjects();
+  const allProjects = [...leadProjects, ...collaboratingProjects];
   const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
   const currentMonthDays = Array.from({ length: 31 }, (_, i) => ({ day: i + 1, isCurrent: true }));
   const nextMonthDays = Array.from({ length: 4 }, (_, i) => ({ day: i + 1, isCurrent: false }));
@@ -57,7 +62,17 @@ export const DashboardPage: React.FC = () => {
           <div className="flex items-center gap-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-              <input placeholder="Search..." className="bg-[#151A22] border border-[#374151] rounded-lg pl-10 pr-4 py-2.5 text-[12px] text-white w-64 focus:outline-none focus:border-[#3B82F6]" />
+              <input 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && searchQuery.trim()) {
+                    navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                  }
+                }}
+                placeholder="Search..." 
+                className="bg-[#151A22] border border-[#374151] rounded-lg pl-10 pr-4 py-2.5 text-[12px] text-white w-64 focus:outline-none focus:border-[#3B82F6]" 
+              />
             </div>
             <button className="p-2.5 rounded-lg bg-[#151A22] border border-[#374151] text-slate-400 hover:text-white"><Bell size={18} /></button>
           </div>
@@ -131,13 +146,13 @@ export const DashboardPage: React.FC = () => {
 
         {/* Action Columns - Right Column */}
         <div className="xl:col-span-4 space-y-6 flex flex-col min-h-0 max-h-[750px] relative z-0">
-          <UrgentActions className="flex-1 min-h-0" onNavigateProject={(id) => navigate(`/projects/${id}`)} />
-          <MyQueue className="flex-1 min-h-0" />
+          <UrgentActions className="flex-1 min-h-0" onNavigateProject={(id) => navigate(`/projects/${id}`)} searchQuery={searchQuery} />
+          <MyQueue className="flex-1 min-h-0" searchQuery={searchQuery} />
         </div>
       </div>
 
       {/* Critical Watchlist - Bottom Row */}
-      <CriticalWatchlist onNavigate={(id) => navigate(`/projects/${id}`)} />
+      <CriticalWatchlist onNavigate={(id) => navigate(`/projects/${id}`)} searchQuery={searchQuery} />
     </div>
   );
 };

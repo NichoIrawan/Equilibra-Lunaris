@@ -29,6 +29,11 @@ class BatchReviewPayload(BaseModel):
     project_id: SafeId
     tasks: List[TaskReviewItem] = Field(..., min_length=1)
 
+class TaskUpdatePayload(BaseModel):
+    title: Optional[str] = None
+    status: Optional[str] = None
+    description: Optional[str] = None
+
 
 # ---------------------------------------------------------------------------
 # Endpoint
@@ -135,6 +140,44 @@ def batch_review_tasks(payload: BatchReviewPayload):
             status_code=422,
             detail=f"Foreign key constraint violation: {exc.diag.message_primary}",
         ) from exc
+    except Exception as exc:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    finally:
+        if cur is not None:
+            cur.close()
+        _put_conn(conn)
+
+@router.put("/{task_id}", status_code=200)
+def update_task_partial(task_id: SafeId, payload: TaskUpdatePayload):
+    """
+    Partially update an existing task.
+    """
+    conn = _get_conn()
+    cur = None
+    try:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        
+        update_data = payload.dict(exclude_unset=True, exclude_none=True)
+        if not update_data:
+            return {"status": "ok", "message": "No fields to update"}
+            
+        set_clause = ", ".join([f"{k} = %s" for k in update_data.keys()])
+        params = list(update_data.values())
+        params.append(task_id)
+        
+        sql = f"UPDATE public.tasks SET {set_clause}, updated_at = NOW() WHERE id = %s RETURNING id;"
+        cur.execute(sql, params)
+        row = cur.fetchone()
+        
+        if row is None:
+            raise HTTPException(status_code=404, detail="Task not found")
+            
+        conn.commit()
+        return {"status": "success", "message": "Task updated successfully"}
+    except HTTPException:
+        conn.rollback()
+        raise
     except Exception as exc:
         conn.rollback()
         raise HTTPException(status_code=500, detail=str(exc)) from exc
