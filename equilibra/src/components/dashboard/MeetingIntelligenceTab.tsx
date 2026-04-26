@@ -41,11 +41,14 @@ interface MeetingIntelligenceTabProps {
   projectId: string | number;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onMeetingCreated?: (data: any) => Promise<any>;
+  /** Called after tasks are committed to the board so the parent can refresh */
+  onTasksCreated?: () => void | Promise<void>;
 }
 
 export const MeetingIntelligenceTab: React.FC<MeetingIntelligenceTabProps> = ({
   projectId,
   onMeetingCreated,
+  onTasksCreated,
 }) => {
   const [view, setView] = useState<
     "choice" | "upload" | "link" | "loading" | "processing" | "result"
@@ -73,11 +76,8 @@ export const MeetingIntelligenceTab: React.FC<MeetingIntelligenceTabProps> = ({
           const data = await response.json();
           if (data.status === "success" && data.data && data.data.mom) {
             try {
-              const momContent = JSON.parse(latest.mom_content);
-              const momData = momContent.mom || momContent;
-
               const transformedTasks: Task[] = (
-                latest.proposed_tasks || []
+                data.data.proposed_tasks || []
               ).map((t: Record<string, unknown>, i: number) => ({
                 id: `task-bg-${i}-${Date.now()}`,
                 title: t.title,
@@ -116,8 +116,7 @@ export const MeetingIntelligenceTab: React.FC<MeetingIntelligenceTabProps> = ({
       }, 5000);
     }
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, lastMeetingCount]);
+  }, [view]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -247,6 +246,8 @@ export const MeetingIntelligenceTab: React.FC<MeetingIntelligenceTabProps> = ({
       }
 
       setSynced(true);
+      // Notify parent to refresh the Kanban board
+      if (onTasksCreated) await onTasksCreated();
       setTimeout(() => setSynced(false), 3000);
     } catch (err) {
       console.error("Failed to sync to project", err);
