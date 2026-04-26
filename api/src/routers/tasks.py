@@ -30,6 +30,11 @@ class BatchReviewPayload(BaseModel):
     project_id: SafeId
     tasks: List[TaskReviewItem] = Field(..., min_length=1)
 
+class TaskUpdatePayload(BaseModel):
+    title: Optional[str] = None
+    status: Optional[str] = None
+    description: Optional[str] = None
+
 
 # ---------------------------------------------------------------------------
 # Endpoint

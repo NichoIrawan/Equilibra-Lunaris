@@ -12,9 +12,10 @@ import { Skeleton } from '../../design-system/Skeleton';
 interface UrgentActionsProps {
   onNavigateProject: (id: number) => void;
   className?: string;
+  searchQuery?: string;
 }
 
-export const UrgentActions: React.FC<UrgentActionsProps> = ({ onNavigateProject, className = "" }) => {
+export const UrgentActions: React.FC<UrgentActionsProps> = ({ onNavigateProject, className = "", searchQuery }) => {
   const { alerts, loading, resolveAlert } = useAlerts();
   const { leadProjects, collaboratingProjects } = useProjects();
   const allProjects = [...leadProjects, ...collaboratingProjects];
@@ -23,9 +24,17 @@ export const UrgentActions: React.FC<UrgentActionsProps> = ({ onNavigateProject,
 
   const getProjectName = (id: number) => allProjects.find(p => p.id === id)?.name || `Project #${id}`;
 
+  const filteredAlerts = alerts.filter(alert => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    const alertTitle = alert.title?.toLowerCase() || '';
+    const projectName = getProjectName(Number(alert.project_id)).toLowerCase();
+    return alertTitle.includes(q) || projectName.includes(q);
+  });
+
   return (
     <>
-      <SurfaceCard title="Urgent Action" icon={AlertCircle} className={className} rightElement={loading ? <Skeleton width={60} height={18} /> : (alerts.length > 0 ? <Badge variant="critical">{alerts.length} Items</Badge> : null)}>
+      <SurfaceCard title="Urgent Action" icon={AlertCircle} className={className} rightElement={loading ? <Skeleton width={60} height={18} /> : (filteredAlerts.length > 0 ? <Badge variant="critical">{filteredAlerts.length} Items</Badge> : null)}>
         <div className="space-y-3 flex-1 overflow-y-auto no-scrollbar pr-2 min-h-0">
           {loading ? (
             [1, 2, 3].map(i => (
@@ -38,10 +47,10 @@ export const UrgentActions: React.FC<UrgentActionsProps> = ({ onNavigateProject,
                 <Skeleton variant="circle" width={24} height={24} className="ml-4" />
               </div>
             ))
-          ) : alerts.length === 0 ? (
+          ) : filteredAlerts.length === 0 ? (
             <div className="text-slate-500 text-[12px] py-8 text-center border border-dashed border-[#374151] rounded-xl">All clear. No urgent actions required.</div>
           ) : (
-            alerts.map((alert) => (
+            filteredAlerts.map((alert) => (
               <div
                 key={alert.id!}
                 onClick={() => setSelectedAlert(alert)}

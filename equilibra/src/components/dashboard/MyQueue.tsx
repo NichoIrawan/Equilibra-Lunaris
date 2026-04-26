@@ -15,7 +15,7 @@ const TYPE_VARIANTS: Record<string, 'primary' | 'success' | 'warning' | 'default
   REQUIREMENT: 'success',
 };
 
-export const MyQueue: React.FC<{ className?: string }> = ({ className = "" }) => {
+export const MyQueue: React.FC<{ className?: string; searchQuery?: string }> = ({ className = "", searchQuery }) => {
   const [tasks, setTasks] = React.useState<Awaited<ReturnType<typeof taskService.getMyTasks>>>([]);
   const [loading, setLoading] = React.useState(true);
 
@@ -26,16 +26,21 @@ export const MyQueue: React.FC<{ className?: string }> = ({ className = "" }) =>
     });
   }, []);
 
+  const filteredTasks = tasks.filter(task => {
+    if (!searchQuery) return true;
+    return task.title?.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
   return (
-    <SurfaceCard title="My Queue" icon={Target} className={className} rightElement={tasks.length > 0 ? <Badge variant="primary">{tasks.length}</Badge> : null}>
+    <SurfaceCard title="My Queue" icon={Target} className={className} rightElement={filteredTasks.length > 0 ? <Badge variant="primary">{filteredTasks.length}</Badge> : null}>
       <div className="space-y-3 flex-1 overflow-y-auto no-scrollbar pr-2 min-h-0">
         {loading ? (
           <div className="text-slate-500 text-[12px] py-4 text-center">Loading queue...</div>
-        ) : tasks.length === 0 ? (
+        ) : filteredTasks.length === 0 ? (
           <div className="text-slate-500 text-[12px] py-8 text-center border border-dashed border-[#374151] rounded-xl">
             Queue is empty. No tasks assigned to you.
           </div>
-        ) : tasks.map(task => (
+        ) : filteredTasks.map(task => (
           <div key={task.id} className="p-3.5 rounded-xl bg-[#151A22] border border-[#374151] hover:border-[#3B82F6]/50 transition-all group flex justify-between items-center">
             <div>
               <div className="flex gap-2 mb-1.5 flex-wrap">

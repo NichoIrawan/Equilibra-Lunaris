@@ -40,6 +40,16 @@ export const taskService = {
     });
   },
 
+  updateTaskStatus: async (
+    id: number | string,
+    status: string,
+  ): Promise<Task> => {
+    return await apiFetch<Task>(`/v1/tasks/${id}`, {
+      method: "PUT",
+      body: JSONBig.stringify({ status }),
+    });
+  },
+
   deleteTask: async (id: number | string): Promise<void> => {
     await apiFetch(`/tasks/${id}`, {
       method: "DELETE",
