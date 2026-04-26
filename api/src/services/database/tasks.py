@@ -129,8 +129,6 @@ def db_create_task(task: DatabaseTask):
             cur.close()
         _put_conn(conn)
 
-
-
 @db_router.get("/tasks")
 def db_get_tasks():
     conn = _get_conn()
@@ -144,7 +142,6 @@ def db_get_tasks():
         if cur is not None:
             cur.close()
         _put_conn(conn)
-
 
 @db_router.get("/tasks/{task_id}")
 def db_get_task_by_id(task_id: int):
@@ -164,7 +161,6 @@ def db_get_task_by_id(task_id: int):
         if cur is not None:
             cur.close()
         _put_conn(conn)
-
 
 class TaskUpdate(BaseModel):
     project_id: Optional[SafeId] = None
