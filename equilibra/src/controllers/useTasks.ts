@@ -140,12 +140,16 @@ export const useTasks = (projectId?: string | number) => {
   );
 
   const updateTaskStatus = useCallback(
-    async (id: string | number, status: BucketState, bucketId: string | number) => {
+    async (
+      id: string | number,
+      status: BucketState,
+      bucketId: string | number,
+    ) => {
       let prevTask: Task | undefined;
-      
+
       setTasks((prev) => {
         const newTasks = [...prev];
-        const idx = newTasks.findIndex(t => String(t.id) === String(id));
+        const idx = newTasks.findIndex((t) => String(t.id) === String(id));
         if (idx !== -1) {
           prevTask = { ...newTasks[idx] };
           newTasks[idx] = { ...newTasks[idx], status, bucket_id: bucketId };
@@ -154,16 +158,18 @@ export const useTasks = (projectId?: string | number) => {
       });
 
       try {
-        await taskService.updateTaskStatus(id, status);
+        await taskService.updateTaskStatus(id, bucketId);
       } catch (err) {
         console.error(err);
         showToast("Failed to update task status", "error");
         if (prevTask) {
-           setTasks((prev) => prev.map((t) => String(t.id) === String(id) ? prevTask! : t));
+          setTasks((prev) =>
+            prev.map((t) => (String(t.id) === String(id) ? prevTask! : t)),
+          );
         }
       }
     },
-    [showToast]
+    [showToast],
   );
 
   return {

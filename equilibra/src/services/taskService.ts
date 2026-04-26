@@ -46,11 +46,11 @@ export const taskService = {
 
   updateTaskStatus: async (
     id: number | string,
-    status: string,
+    bucketId: string | number,
   ): Promise<Task> => {
     return await apiFetch<Task>(`/tasks/${id}`, {
       method: "PUT",
-      body: JSONBig.stringify({ status }),
+      body: JSONBig.stringify({ bucket_id: bucketId }),
     });
   },
 
