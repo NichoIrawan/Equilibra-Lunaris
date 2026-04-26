@@ -1,4 +1,4 @@
-import { LayoutDashboard, Briefcase, Bell, Settings } from 'lucide-react';
+import { LayoutDashboard, Briefcase, Bell, Settings, Heart } from 'lucide-react';
 import { useAuth } from '../../auth/useAuth';
 import { getDisplayName } from '../../auth/displayName';
 import logo from '../../assets/logo.png';
@@ -9,6 +9,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 const NAV_ITEMS = [
   { id: 'dashboard', icon: LayoutDashboard },
   { id: 'workspaces', icon: Briefcase },
+  { id: 'kudos', icon: Heart },
   { id: 'notifications', icon: Bell },
 ];
 
