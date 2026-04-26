@@ -9,6 +9,7 @@ import { WorkspacesPage } from "./pages/Workspaces";
 import { ProjectDetailsPage } from "./pages/ProjectDetails";
 import { NotificationsPage } from "./pages/Notifications";
 import { SearchPage } from "./pages/Search";
+import { KudosBoard } from "./pages/KudosBoard";
 import { SettingsModal } from "./components/modals/SettingsModal";
 import { TelegramLinkPrompt } from "./components/notifications/TelegramLinkPrompt";
 import { useState } from "react";
@@ -31,6 +32,7 @@ function AppShell() {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/workspaces" element={<WorkspacesPage />} />
           <Route path="/search" element={<SearchPage />} />
+          <Route path="/kudos" element={<KudosBoard />} />
           <Route path="/projects/:projectId" element={<ProjectDetailsPageWrapper />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
