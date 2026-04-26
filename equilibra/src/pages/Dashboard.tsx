@@ -25,9 +25,9 @@ export const DashboardPage: React.FC = () => {
   const { leadProjects, collaboratingProjects } = useProjects();
   const displayName = user ? getDisplayName(user) : '…';
 
-  // Get first project for calendar display
+  // Gather ALL projects for Global Timeline
   const allProjects = [...leadProjects, ...collaboratingProjects];
-  const primaryProject = allProjects.length > 0 ? allProjects[0] : null;
+  const allProjectIds = allProjects.map(p => p.id!);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 max-w-[1600px] mx-auto w-full">
@@ -71,9 +71,9 @@ export const DashboardPage: React.FC = () => {
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
         {/* Calendar - Left Column */}
         <div className="xl:col-span-8 flex flex-col h-full relative z-10">
-          {primaryProject ? (
+          {allProjectIds.length > 0 ? (
             <ScheduleCalendar
-              projectId={primaryProject.id}
+              projectIds={allProjectIds}
               onTaskClick={(task) => navigate(`/projects/${task.project_id}`)}
             />
           ) : (
