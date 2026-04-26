@@ -23,7 +23,7 @@ export const taskService = {
     if (endDate) params.append("end_date", endDate);
 
     const queryString = params.toString();
-    const url = `/v1/tasks/calendar/${projectId}${queryString ? `?${queryString}` : ""}`;
+    const url = `/tasks/calendar/${projectId}${queryString ? `?${queryString}` : ""}`;
     return await apiFetch<any>(url);
   },
 
